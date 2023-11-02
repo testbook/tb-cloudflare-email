@@ -21,7 +21,7 @@ class Email {
 	 *
 	 * @param email
 	 */
-	static async send(email: IEmail, env: Env) {
+	static async send(email: IEmail, env: Env): Promise<Response> {
 		// convert email to IMCEmail (MailChannels Email)
 		const mcEmail: IMCEmail = Email.convertEmail(email, env);
 
@@ -36,10 +36,26 @@ class Email {
 			})
 		);
 
-		// check if email was sent successfully
+		let responseMessage = JSON.stringify(await resp.json());
+		let responseStatus = "SUCCESS"
+		let responseStatusCode = 1000
+		let responseHttpStatusCode = 200
+	
 		if (resp.status > 299 || resp.status < 200) {
-			throw new Error(`Error sending email: ${resp.status} ${resp.statusText} ${await resp.text()}}`);
+			responseStatusCode = 9001
+			responseStatus = "ERROR"
+			responseHttpStatusCode = resp.status
 		}
+
+		return new Response(
+			JSON.stringify({
+				status: responseStatus,
+				statusCode: responseStatusCode,
+				message: "NA",
+				apiResponse : responseMessage,
+			}),
+			{ headers: { 'content-type': 'application/json' }, status: responseHttpStatusCode }
+		);
 	}
 
 	/**
